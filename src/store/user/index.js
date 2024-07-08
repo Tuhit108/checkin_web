@@ -7,7 +7,7 @@ import { batch } from "react-redux";
 
 
 
-const { setStore, reducer, sync, useByKey, setQueries, removeByKey, useKeysByQuery } =
+const { setStore, reducer, sync, useByKey, setQueries, removeByKey, useKeysByQuery, getByKey } =
 createDynamicReducer("user", "id");
 
 export const setUserStore = setStore;
@@ -17,6 +17,7 @@ export const syncUser = sync;
 export const setUserQueries = setQueries;
 export const removeUserByKey = removeByKey;
 export const useUsersByQuery = useKeysByQuery;
+export const getUserByKey = getByKey;
 
 
 export const syncAllUsers = (accessories) => {

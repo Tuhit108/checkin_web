@@ -8,6 +8,7 @@ import {constantReducer, constantSetStore} from "./constant";
 import {setUserStore, userReducer} from "./user";
 import { locationsReducer, setLocationsStore } from './location';
 import {checkinsReducer, setCheckinsStore} from "./checkinLogs";
+import {requestsReducer, setRequestsStore} from "./request";
 // const middlewares: any[] = [];
 
 
@@ -26,10 +27,12 @@ export const store = configureStore({
       location:locationsReducer,
       checkin: checkinsReducer,
       user: userReducer,
+      request: requestsReducer
   }
 });
 // export type RootState = ReturnType<typeof store.getState>;
 setCheckinsStore(store)
 setLocationsStore(store)
 setUserStore(store)
+setRequestsStore(store)
 

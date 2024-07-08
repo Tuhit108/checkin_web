@@ -2,8 +2,7 @@ import Location from "views/Location.js";
 import Client from "views/Client";
 import UserList from "views/UserList.js";
 import CheckinHistory from "views/CheckinHistory.js";
-import Account from "views/Account.js";
-import Login from "layouts/Login.js"
+import Request from "views/Request.js";
 import Setting from "./views/Setting";
 import UserDetail from "./views/UserDetail";
 
@@ -41,7 +40,7 @@ const dashboardRoutes = [
     path: "/request",
     name: "Đề xuất",
     icon: "nc-icon nc-circle-09",
-    component: Account,
+    component: Request,
     layout: "/admin"
   },
   {
