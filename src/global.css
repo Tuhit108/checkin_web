@@ -1,0 +1,16 @@
+.modal-dialog {
+    transform: translate(0, 0) !important;
+    top: 0;
+    bottom: 0
+}
+.header-table {
+    font-size: 22px;
+    line-height: 30px;
+}
+
+.h4 {
+    margin: 0;
+}
+.events{
+}
+
