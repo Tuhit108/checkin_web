@@ -32,3 +32,23 @@
 .log-row {
     padding: 0;
 }
+.row-information {
+    display: flex;
+    flex-direction: row;
+    padding: 8px;
+}
+.row-footer {
+    display: flex;
+    flex-direction: row;
+    padding: 8px;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.label{
+    width: 30%;
+    font-weight: 500;
+    font-size: 14px;
+}
+.value{
+    width: 70%;
+}

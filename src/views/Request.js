@@ -1,27 +1,23 @@
 import React, {useEffect, useMemo, useState} from "react";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
-import {
-    Card,
-    Row,
-    Col,
-} from "react-bootstrap";
-import {requestAllClientWifi} from "../store/clientWifi/function";
+import {Card, Col, Row,} from "react-bootstrap";
 import {requestAllRequest} from "../store/request/function";
 import {getUserByKey} from "../store/user";
 import moment from "moment";
-import VirtualTable from "../components/VirtualTable";
-import {Tag, Table, Modal} from "antd";
-
+import {Button, Modal, Table, Tag} from "antd";
+import './view.css'
+import {useAsyncFn} from "react-use";
+import {requestAllCheckinsByUser} from "../store/checkinLogs/function";
+import axios from "axios";
+import {syncRequests} from "../store/request";
 
 
 function Request() {
-    const [requests , setRequests] = useState([]);
+    const [requests, setRequests] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeRequest, setActiveRequest] = useState("")
     const [refetch, setRefetch] = useState(0);
-    const getUserById = (id)=>{
+    const getUserById = (id) => {
         const user = getUserByKey(id)
         return  user?.name || "unknown"
     }
@@ -52,14 +48,16 @@ function Request() {
             uids[userName] = userName;
             lids[record.status] = record.status
             results.push({
-                index: i+1,
+                index: i + 1,
+                id: record.id,
                 key: record.id,
                 name: record.name,
                 uid: record?.userId,
                 userName: userName,
                 date: moment.unix(record.timestamp).format("DD/MM/YYYY"),
-                timestamp:Number(record.timestamp) ,
+                timestamp: Number(record.timestamp),
                 status: record?.status || "pending",
+                type: record?.type || "self-claim",
                 reason: record?.reason || ""
             })
         }
@@ -69,7 +67,7 @@ function Request() {
             uids,
             dataSource: results,
         };
-    }, [requests?.length]);
+    }, [requests]);
     const columns = useMemo(() => {
         return [
             {
@@ -120,6 +118,60 @@ function Request() {
             },
         ];
     }, [ lids, uids]);
+    const [{loading: approving}, approveRequest] = useAsyncFn(async () => {
+        let data = JSON.stringify({
+            "requestID": activeRequest.id
+        });
+
+        let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: 'https://us-central1-tcheckin.cloudfunctions.net/app/checkin/request/approve',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data : data
+        };
+
+        await axios.request(config)
+            .then((response) => {
+                setRefetch(refetch+1)
+                alert(response.data.message)
+            })
+            .catch((error) => {
+                alert(error)
+                console.log(error);
+            });
+        handleCancel()
+
+    }, [activeRequest.id, refetch]);
+    const [{loading: rejecting}, rejectRequest] = useAsyncFn(async () => {
+        let data = JSON.stringify({
+            "requestID": activeRequest.id
+        });
+
+        let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: 'https://us-central1-tcheckin.cloudfunctions.net/app/checkin/request/reject',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data : data
+        };
+
+        await axios.request(config)
+            .then((response) => {
+                setRefetch(refetch+1)
+                alert(response.data.message)
+            })
+            .catch((error) => {
+                alert(error)
+                console.log(error);
+            });
+        handleCancel()
+
+    }, [activeRequest.id, refetch]);
     return (
         <>
             <Row >
@@ -166,7 +218,8 @@ function Request() {
                                 return {
                                     onClick: (event) => {
                                         setActiveRequest(record)
-                                        showModal()}, // click row
+                                        showModal()
+                                    }, // click row
                                 };
                             }}/>
 
@@ -174,20 +227,58 @@ function Request() {
                     </Card>
                 </Col>
             </Row>
-            <Modal title="Chi tiết đề xuất" open={isModalOpen} onOk={() => {
+            <Modal title={activeRequest?.name || "Chi tiết đề xuất"} open={isModalOpen} onOk={() => {
             }} onCancel={handleCancel}
-                   footer={<div> hahahoo</div>}
-            >
-                <div>
-                    {activeRequest.name}
-                </div>
-                <div>
-                    {activeRequest.reason}
-                </div>
-                <div>
-                    {activeRequest.userName}
-                </div>
+                   footer={<div className={"row-footer"}>
+                       <Button style={{ background: "red", color: "#fff", borderColor: "#fff" }} onClick={rejectRequest} loading={rejecting}>Từ chối</Button>
 
+                       <Button style={{ background: "#17C286", color: "#fff", borderColor: "#fff" }} onClick={approveRequest} loading={approving}>Chấp thuận</Button>
+                    </div>}
+            ><div className={"row-information"}>
+                <span className={"label"}>Loại đề xuất :</span>
+                {
+                    activeRequest.type === "self-claim" ?
+                        <div className={"value"}>
+                            <span>Chấm công bù</span>
+                        </div>
+                        :
+                        <div className={"value"}>
+                            <span>Nghỉ phép </span>
+                        </div>
+                }
+            </div>
+                <div className={"row-information"}>
+                    <span className={"label"}>Người tạo :</span>
+                    <div className={"value"}>
+                        {activeRequest.userName}
+                    </div>
+                </div>
+                <div className={"row-information"}>
+                    <span className={"label"}>Trạng thái :</span>
+                    <div className={"value"}>
+                        <Tag
+                            color={activeRequest.status === "pending" ? "geekblue" : (activeRequest.status === "approved" ? 'green' : 'volcano')}>{activeRequest.status}</Tag>
+                    </div>
+                </div>
+                <div className={"row-information"}>
+                    <span className={"label"}>Lý do :</span>
+                    <div className={"value"}>
+                        <span>{activeRequest.reason || ""}</span>
+                    </div>
+                </div>
+                <div className={"row-information"}>
+                    <span className={"label"}>Thời gian đề xuất :</span>
+                    {
+                        activeRequest.type === "self-claim" ?
+                            <div className={"value"}>
+                                <span>{moment.unix(activeRequest.timestamp).format("DD/MM/YYYY HH:mm") || ""}</span>
+                            </div>
+                            :
+                            <div className={"value"}>
+                                <span>{moment.unix(activeRequest.timestamp).format("DD/MM/YYYY") || ""}</span>
+                            </div>
+                    }
+                </div>
             </Modal>
         </>
     );
