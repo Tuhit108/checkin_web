@@ -52,3 +52,27 @@
 .value{
     width: 70%;
 }
+.shift-view {
+    padding: 16px;
+    background-color: #1dc7ea10;
+    border-radius: 4px;
+    gap: 12px;
+}
+.shift-card {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+}
+.shift-group {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 16px;
+    margin-bottom: 16px
+}
+.shift-day {
+    width: 70px;
+}
+

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {Calendar, Skeleton} from "antd";
 import 'global.css'
@@ -6,14 +6,9 @@ import './view.css'
 import moment from "moment/moment";
 import {useUser} from "../store/user";
 import {useAsyncFn} from "react-use";
-import {getAllCheckins} from "../services/checkinServices";
-import {
-    getCheckinByDateAndUser,
-    requestAllCheckinsByUser,
-    useCheckinByDateAndUser
-} from "../store/checkinLogs/function";
-import {Button, Card, Form, Modal, Row} from "react-bootstrap";
-import {getCheckinsIdsByQuery, useCheckinsIdsByQuery} from "../store/checkinLogs";
+import {getCheckinByDateAndUser, requestAllCheckinsByUser} from "../store/checkinLogs/function";
+import {Card, Modal} from "react-bootstrap";
+import {requestGetTimesheet} from "../services/timsheetService";
 
 const ShiftModal = ({isOpen, onClose, count}) => {
     const countShift = count()
@@ -117,6 +112,14 @@ const DayModal = ({isOpen, onClose, date, logInDate}) => {
         </Modal>
     )
 }
+const compareTime = (time1, time2) =>{
+
+// Tách giờ và phút ra
+    const [timeHour, timeMinute] = time1.split(":").map(Number);
+    const [logHour, logMinute] = time2.split(":").map(Number);
+
+    return (logHour * 60 + logMinute) - (timeHour * 60 + timeMinute)
+}
 
 const UserDetail = () => {
     const {id} = useParams();
@@ -124,6 +127,9 @@ const UserDetail = () => {
     const [showAdd, setShowAdd] = useState(false)
     const [showDateModal, setShowDateModal] = useState(false)
     const [currentDate, setCurrentDate] = useState("")
+    const timesheet = localStorage.getItem('timesheet');
+    console.log("shift", timesheet)
+
     const countShift = () => {
         // Tạo đối tượng moment từ timestamp
         const monthStart = moment();
@@ -140,15 +146,43 @@ const UserDetail = () => {
         for (let i = 1; i <= daysInMonth; i++) {
             const day = monthStart.date(i).format('DD-MM-YYYY');
             const dayInWeek = monthStart.date(i).day()
-            if (dayInWeek === 0 || dayInWeek === 6) {
-                shift.push({
-                    date: day,
-                    shiftCount: 0
-                })
-                continue
-            }
-            totalShift += 1
+            const shiftSkey = `shift_s${dayInWeek}`
+            const shiftCkey = `shift_c${dayInWeek}`
+            const startShiftS = shift?.[`shift_${dayInWeek}_0`] || "08:00"
+            const endShiftS = shift?.[`shift_${dayInWeek}_1`] || "12:00"
+            const startShiftC = shift[`shift_${dayInWeek}_2`] || "14:00"
+            const endShiftC = shift[`shift_${dayInWeek}_2`] || "18:00"
+
+
             const logInDate = getCheckinByDateAndUser(`${day}_${user?.userCode}`)
+            if (shift?.[shiftSkey] === 1 && shift?.[shiftCkey] === 1) {
+                totalShift += 2
+                if (logInDate.length < 2) {
+                    shift.push({
+                        date: day,
+                        shiftCount: 0
+                    })
+                }
+                else if (compareTime(moment.unix(logInDate[0]).format("HH:mm"), startShiftS) >= 0 ) {
+                    if (compareTime(endShiftC, moment.unix(logInDate[logInDate.length - 1]).format("HH:mm")) >= 0) {
+                        shift.push({
+                            date: day,
+                            shiftCount: 2,
+                            late: 0
+                        })
+                    } else if (compareTime(endShiftC, moment.unix(logInDate[logInDate.length - 1]).format("HH:mm")) < 0 && compareTime(endShiftS, moment.unix(logInDate[logInDate.length - 1]).format("HH:mm"))>=0 ) {
+                        shift.push({
+                            date: day,
+                            shiftCount: 1,
+                            late: 0
+                        })
+                    } else {
+
+                    }
+
+                }
+
+            }
             if (logInDate.length < 2) {
                 shift.push({
                     date: day,
@@ -210,6 +244,7 @@ const UserDetail = () => {
     }, [user?.userCode]);
     useEffect(() => {
         getListCheckin().then()
+        requestGetTimesheet().then()
     }, [user]);
 
     const countShiftInDay = (logInDate)=>{

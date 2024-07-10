@@ -12,6 +12,7 @@ import sidebarImage from "assets/img/sidebar-3.jpg";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import {syncAllUsers} from "../store/user";
 import {requestAddUser, requestAllUser} from "../store/user/function";
+import {requestGetTimesheet} from "../services/timsheetService";
 function Admin() {
   const [image, setImage] = useState(sidebarImage);
   const [color, setColor] = useState("black");
@@ -27,6 +28,7 @@ function Admin() {
   }
   useEffect(() => {
     requestAllUser().then()
+    requestGetTimesheet().then()
   }, []);
 
   const getRoutes = (routes) => {
