@@ -81,12 +81,13 @@ export const requestAddWifiClient= async (name, bssid) => {
         });
     return res
 };
-export const requestAddLocationClient= async (name, long, lat) => {
+export const requestAddLocationClient= async (name, long, lat, distance) => {
 
     let data = JSON.stringify({
         "name": name,
         "long": long,
-        "lat": lat
+        "lat": lat,
+        "distance": distance
     });
     let res = []
 

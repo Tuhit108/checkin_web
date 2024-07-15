@@ -40,8 +40,15 @@ const Login = () => {
                 if (response.data) {
                     // if (response.data?.data?.role === 'ADMIN') {
                         localStorage.setItem('userData', JSON.stringify(response.data?.user || ""));
-                        alert('Login successfully!');
-                        history.push('/admin');
+                        if (response.data.user.role !== "admin") {
+                            alert('Bạn không có quyền đăng nhập!');
+                            return
+                        }
+                        else {
+
+                            alert('Login successfully!');
+                            history.push('/admin');
+                        }
                     // }
                     // else {
                     //     alert('You are not Admin!');

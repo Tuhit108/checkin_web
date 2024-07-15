@@ -5,6 +5,7 @@ import CheckinHistory from "views/CheckinHistory.js";
 import Request from "views/Request.js";
 import Setting from "./views/Setting";
 import UserDetail from "./views/UserDetail";
+import Shift from "./views/TimeSheet";
 
 const dashboardRoutes = [
   {
@@ -24,7 +25,7 @@ const dashboardRoutes = [
   {
     path: "/users",
     name: "Quản lý người dùng",
-    icon: "nc-icon nc-paper-2",
+    icon: "nc-icon nc-circle-09",
     component: UserList,
     layout: "/admin",
     exact: true
@@ -41,6 +42,13 @@ const dashboardRoutes = [
     name: "Đề xuất",
     icon: "nc-icon nc-circle-09",
     component: Request,
+    layout: "/admin"
+  },
+  {
+    path: "/timesheet",
+    name: "Bảng công",
+    icon: "nc-icon nc-paper-2",
+    component: Shift,
     layout: "/admin"
   },
   {

@@ -27,3 +27,28 @@ export const requestAllRequest= async () => {
         });
     return res
 };
+export const requestApprovedRequestInMonth= async (id) => {
+
+    let data = JSON.stringify({
+        "requestApprovedID": id
+    });
+
+    let config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: 'https://us-central1-tcheckin.cloudfunctions.net/app/checkin/request/approved',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        data : data
+    };
+
+   const res =  await axios.request(config)
+        .then((response) => {
+                return response.data.data;
+        })
+        .catch((error) => {
+            return {}
+        });
+    return res
+};

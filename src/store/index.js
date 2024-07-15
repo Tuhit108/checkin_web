@@ -9,6 +9,8 @@ import {setUserStore, userReducer} from "./user";
 import { locationsReducer, setLocationsStore } from './location';
 import {checkinsReducer, setCheckinsStore} from "./checkinLogs";
 import {requestsReducer, setRequestsStore} from "./request";
+import {clientsReducer, setClientsStore} from "./client";
+import {setShiftsStore, shiftsReducer} from "./shift";
 // const middlewares: any[] = [];
 
 
@@ -27,7 +29,9 @@ export const store = configureStore({
       location:locationsReducer,
       checkin: checkinsReducer,
       user: userReducer,
-      request: requestsReducer
+      request: requestsReducer,
+      client: clientsReducer,
+      shift: shiftsReducer
   }
 });
 // export type RootState = ReturnType<typeof store.getState>;
@@ -35,4 +39,6 @@ setCheckinsStore(store)
 setLocationsStore(store)
 setUserStore(store)
 setRequestsStore(store)
+setClientsStore(store)
+setShiftsStore(store)
 

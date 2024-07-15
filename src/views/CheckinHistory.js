@@ -17,6 +17,7 @@ import { useAsyncFn } from "react-use";
 import { store } from "store";
 import moment from "moment"
 import VirtualTable from "components/VirtualTable";
+import {getClient} from "../store/client";
 
 function CheckinHistory() {
   const [records, setRecords] = useState([]);
@@ -36,13 +37,15 @@ function CheckinHistory() {
 
     for (let i = 0; i < records.length; i++){
       const record = records[i];
-      lids[record?.clientID] = record?.clientID;
+      const client = getClient(record.clientID)
+      const clientName = record?.type === "machine" ? "Máy chấm công" : client?.name || "unknown"
+      lids[clientName] = clientName;
       uids[record?.userCode] = record?.userCode;
 
         results.push({
           key: record.id,
           uid: record?.userCode,
-          location: record?.clientID,
+          clientName: clientName,
           time: moment.unix(record.timestamp).format("HH:mm:ss"),
           date: moment.unix(record.timestamp).format("DD/MM/YYYY"),
           timestamp: record.timestamp,
@@ -67,11 +70,11 @@ function CheckinHistory() {
       },
       {
         title: "Địa điểm",
-        key: "location",
-        dataIndex: "location",
+        key: "clientName",
+        dataIndex: "clientName",
         filters: Object.values(lids || {}).map((ip) => ({ text: ip, value: ip })),
         onFilter: (value, record) =>
-          record.location === value,
+          record.clientName === value,
       },
       {
         title: "Thời gian",

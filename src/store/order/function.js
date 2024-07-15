@@ -18,7 +18,6 @@ export const createOrder = async(param) =>{
         "buyerId": param.buyerId ,
         "shopId": param.shopId
     });
-    console.log("data",data)
 
     const config = {
         method: 'post',

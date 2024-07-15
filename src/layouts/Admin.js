@@ -13,6 +13,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import {syncAllUsers} from "../store/user";
 import {requestAddUser, requestAllUser} from "../store/user/function";
 import {requestGetTimesheet} from "../services/timsheetService";
+import {requestAllClients} from "../store/client/function";
 function Admin() {
   const [image, setImage] = useState(sidebarImage);
   const [color, setColor] = useState("black");
@@ -29,6 +30,7 @@ function Admin() {
   useEffect(() => {
     requestAllUser().then()
     requestGetTimesheet().then()
+    requestAllClients().then()
   }, []);
 
   const getRoutes = (routes) => {

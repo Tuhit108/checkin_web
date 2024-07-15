@@ -23,12 +23,14 @@ const AddModal = ({ isOpen, onSubmit, onClose }) => {
   const [name, setName] = useState('');
   const [long, setLong] = useState('');
   const [lat, setLat] = useState('');
+  const [distance, setDistance] = useState(100);
 
   const handleSubmit = () => {
     onSubmit({
       name,
       long,
-      lat
+      lat,
+      distance
     });
     onClose();
   }
@@ -55,7 +57,6 @@ const AddModal = ({ isOpen, onSubmit, onClose }) => {
               <Form.Label>Long</Form.Label>
               <Form.Control
                   placeholder=""
-                  autoFocus
                   required
                   inputMode="text"
                   value={long}
@@ -66,11 +67,20 @@ const AddModal = ({ isOpen, onSubmit, onClose }) => {
               <Form.Label>Lat</Form.Label>
               <Form.Control
                   placeholder=""
-                  autoFocus
                   required
                   inputMode="text"
                   value={lat}
                   onChange={(e) => setLat(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="exampleForm.ControlInput2">
+              <Form.Label>Distance</Form.Label>
+              <Form.Control
+                  placeholder=""
+                  required
+                  inputMode="text"
+                  value={distance}
+                  onChange={(e) => setDistance(e.target.value)}
               />
             </Form.Group>
 
@@ -118,7 +128,6 @@ const EditModal = ({ isOpen, onSubmit, onClose, data }) => {
               <Form.Control
                   type="text"
                   placeholder="Lotte Center"
-                  autoFocus
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -128,7 +137,6 @@ const EditModal = ({ isOpen, onSubmit, onClose, data }) => {
               <Form.Label>BSSID</Form.Label>
               <Form.Control
                   placeholder="MAC"
-                  autoFocus
                   required
                   inputMode="text"
                   value={bssid}
@@ -169,7 +177,7 @@ function Location() {
   }, [refetch])
 
   const addLocationClient = (data) => {
-    requestAddLocationClient(data.name, data.long, data.lat)
+    requestAddLocationClient(data.name, data.long, data.lat, data.distance)
         .then(res => {
           alert('Create client successfully!');
           setRefetch(refetch + 1);
@@ -236,6 +244,7 @@ function Location() {
                     <th className="border-0" style={{ fontSize: '15px', fontWeight: 'bold', color: '#000' }}>Tên địa điểm</th>
                     <th className="border-0" style={{ fontSize: '15px', fontWeight: 'bold', color: '#000' }}>Lat</th>
                     <th className="border-0" style={{ fontSize: '15px', fontWeight: 'bold', color: '#000' }}>Long</th>
+                    <th className="border-0" style={{ fontSize: '15px', fontWeight: 'bold', color: '#000' }}>Khoảng cách</th>
                     <th className="border-0" style={{ fontSize: '15px', fontWeight: 'bold', color: '#000' }}>Thao tác</th>
                   </tr>
                   </thead>
@@ -249,6 +258,7 @@ function Location() {
                         <td style={{ cursor: 'pointer'}}>{item?.name || ""}</td>
                         <td>{item?.lat || ""}</td>
                         <td>{item?.long || ""}</td>
+                        <td>{item?.distance || 100}</td>
                         <td>
                           <EditIcon
                               style={{
