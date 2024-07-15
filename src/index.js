@@ -1,8 +1,7 @@
-
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
+import {BrowserRouter, Redirect, Route, Switch} from "react-router-dom";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./assets/css/animate.min.css";
@@ -22,10 +21,12 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <Provider store={store}>
     <BrowserRouter>
-      <Switch>
-        <Route path="/login" component={Login} />
-        <Route path="/admin" render={(props) => <AdminLayout {...props} />} />
-      </Switch>
+        <Switch>
+            <Route path="/login" component={Login}/>
+            <Route path="/admin" render={(props) => <AdminLayout {...props} />}/>
+            <Redirect from="/" to="/login"/>
+
+        </Switch>
     </BrowserRouter>
   </Provider>
 

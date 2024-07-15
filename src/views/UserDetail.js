@@ -10,8 +10,9 @@ import {getCheckinByDateAndUser, requestAllCheckinsByUser} from "../store/checki
 import {Card, Modal} from "react-bootstrap";
 import {requestGetTimesheet} from "../services/timsheetService";
 
-const ShiftModal = ({isOpen, onClose, count}) => {
-    const countShift = count()
+
+const ShiftModal = ({isOpen, onClose, count, selectedMonth}) => {
+    const countShift = count(selectedMonth)
 
     return (
         <Modal show={isOpen} onHide={onClose} size="lg">
@@ -82,17 +83,17 @@ const ShiftModal = ({isOpen, onClose, count}) => {
                         <th className="tg-0pky">Đi muộn</th>
                     </tr>
                     </thead>
-                    {
-                        countShift.shift.map((item) => (
-                            <tbody>
-                            <tr>
-                                <th className="tg-0pky">{item.date}</th>
-                                <th className="tg-0pky">{item.shiftCount}</th>
-                                <th className="tg-0pky">{item.late || 0}</th>
-                            </tr>
-                            </tbody>
-                        ))
-                    }
+                    {/*{*/}
+                    {/*    countShift.shift.map((item) => (*/}
+                    {/*        <tbody>*/}
+                    {/*        <tr>*/}
+                    {/*            <th className="tg-0pky">{item.date}</th>*/}
+                    {/*            <th className="tg-0pky">{item.shiftCount}</th>*/}
+                    {/*            <th className="tg-0pky">{item.late || 0}</th>*/}
+                    {/*        </tr>*/}
+                    {/*        </tbody>*/}
+                    {/*    ))*/}
+                    {/*}*/}
                 </table>
 
             </div>
@@ -112,7 +113,7 @@ const DayModal = ({isOpen, onClose, date, logInDate}) => {
         </Modal>
     )
 }
-const compareTime = (time1, time2) =>{
+const compareTime = (time1, time2) => {
 
 // Tách giờ và phút ra
     const [timeHour, timeMinute] = time1.split(":").map(Number);
@@ -121,18 +122,70 @@ const compareTime = (time1, time2) =>{
     return (logHour * 60 + logMinute) - (timeHour * 60 + timeMinute)
 }
 
+const calShift = (start, end, log) => {
+    console.log("log", log)
+    if(!log){
+        return {
+            countShift: 0,
+            late: 0
+        }
+    }
+    if (log.length < 2) {
+        return {
+            countShift: 0,
+            late: 0
+        }
+    }
+    if (compareTime(end, moment.unix(log[log.length - 1].timestamp).format("HH:mm")) < 0) {
+        return {
+            countShift: 0,
+            late: 0
+        }
+    }
+    if (compareTime(moment.unix(log[0].timestamp).format("HH:mm"), start) >= -30) {
+        const late = compareTime(start, moment.unix(log[0].timestamp).format("HH:mm")) > 0 ? compareTime(start, moment.unix(log[0].timestamp).format("HH:mm")) : 0
+        return {
+            countShift: 1,
+            late: late
+        }
+    }
+    if (compareTime(moment.unix(log[0].timestamp).format("HH:mm"), start) >= -60) {
+        console.log("vao day", -30 > compareTime(moment.unix(log[0].timestamp).format("HH:mm"), start) >= -60)
+        const late = compareTime(start, moment.unix(log[0].timestamp).format("HH:mm"))
+            return {
+                countShift: 0.5,
+                late: late
+            }
+
+    }
+    if (compareTime(moment.unix(log[0].timestamp).format("HH:mm"), start) < -60) {
+            return {
+                countShift: 0,
+                late: 0
+            }
+    }
+    else {
+        return {
+            countShift: 0,
+            late: 0
+        }
+    }
+
+}
+
 const UserDetail = () => {
     const {id} = useParams();
     const user = useUser(id)
     const [showAdd, setShowAdd] = useState(false)
     const [showDateModal, setShowDateModal] = useState(false)
     const [currentDate, setCurrentDate] = useState("")
-    const timesheet = localStorage.getItem('timesheet');
-    console.log("shift", timesheet)
+    const timesheet = JSON.parse(localStorage.getItem('timesheet')) ;
+    const [selectedValue, setSelectedValue] = useState(moment().format("MM/YYYY"));
 
-    const countShift = () => {
+
+    const countShift = (monthYearString) => {
         // Tạo đối tượng moment từ timestamp
-        const monthStart = moment();
+        const monthStart = moment(monthYearString, 'MM/YYYY');
 
         // Lấy số ngày trong tháng
         const daysInMonth = monthStart.daysInMonth();
@@ -140,7 +193,7 @@ const UserDetail = () => {
         let countShift = 0
         let countLate = 0
 
-        let shift = []
+        let shift = {}
 
         // Lặp qua các ngày trong tháng và in ra
         for (let i = 1; i <= daysInMonth; i++) {
@@ -148,85 +201,39 @@ const UserDetail = () => {
             const dayInWeek = monthStart.date(i).day()
             const shiftSkey = `shift_s${dayInWeek}`
             const shiftCkey = `shift_c${dayInWeek}`
-            const startShiftS = shift?.[`shift_${dayInWeek}_0`] || "08:00"
-            const endShiftS = shift?.[`shift_${dayInWeek}_1`] || "12:00"
-            const startShiftC = shift[`shift_${dayInWeek}_2`] || "14:00"
-            const endShiftC = shift[`shift_${dayInWeek}_2`] || "18:00"
+            const startShiftS = timesheet?.[`shift_${dayInWeek}_0`] || "08:00"
+            const endShiftS = timesheet?.[`shift_${dayInWeek}_1`] || "12:00"
+            const startShiftC = timesheet[`shift_${dayInWeek}_2`] || "14:00"
+            const endShiftC = timesheet[`shift_${dayInWeek}_2`] || "18:00"
 
 
             const logInDate = getCheckinByDateAndUser(`${day}_${user?.userCode}`)
-            if (shift?.[shiftSkey] === 1 && shift?.[shiftCkey] === 1) {
-                totalShift += 2
-                if (logInDate.length < 2) {
-                    shift.push({
-                        date: day,
-                        shiftCount: 0
-                    })
+
+
+            if (timesheet?.[shiftSkey] === 1) {
+                totalShift +=1
+                const shiftObject = calShift(startShiftS, endShiftS, logInDate)
+                countShift += shiftObject.countShift
+                shift = {
+                    ...shift,
+                    [`${day}_s`]: shiftObject
                 }
-                else if (compareTime(moment.unix(logInDate[0]).format("HH:mm"), startShiftS) >= 0 ) {
-                    if (compareTime(endShiftC, moment.unix(logInDate[logInDate.length - 1]).format("HH:mm")) >= 0) {
-                        shift.push({
-                            date: day,
-                            shiftCount: 2,
-                            late: 0
-                        })
-                    } else if (compareTime(endShiftC, moment.unix(logInDate[logInDate.length - 1]).format("HH:mm")) < 0 && compareTime(endShiftS, moment.unix(logInDate[logInDate.length - 1]).format("HH:mm"))>=0 ) {
-                        shift.push({
-                            date: day,
-                            shiftCount: 1,
-                            late: 0
-                        })
-                    } else {
-
-                    }
-
-                }
-
-            }
-            if (logInDate.length < 2) {
-                shift.push({
-                    date: day,
-                    shiftCount: 0
-                })
-
-            } else {
-
-                const firstLog = moment.unix(logInDate[0].timestamp)
-                const lastLog = moment.unix(logInDate[logInDate.length - 1].timestamp)
-                if (firstLog.hour() < 14 && lastLog.hour() >= 18) {
-                    if (firstLog.hour() < 9 && lastLog.hour() >= 18) {
-
-                        if (firstLog.hour() === 8) {
-                            countLate += 1
-                            shift.push({
-                                date: day,
-                                shiftCount: 1,
-                                late: 1
-                            })
-                        } else {
-                            shift.push({
-                                date: day,
-                                shiftCount: 1,
-                            })
-                        }
-                        countShift += 1
-
-                    } else {
-                        shift.push({
-                            date: day,
-                            shiftCount: 0.5
-                        })
-                        countShift += 0.5
-                    }
-
-                } else {
-                    shift.push({
-                        date: day,
-                        shiftCount: 0
-                    })
+                if (shiftObject.late > 0 ){
+                    countLate+=1
                 }
             }
-
+            if (timesheet?.[shiftCkey] === 1) {
+                totalShift +=1
+                const shiftObject = calShift(startShiftC, endShiftC, logInDate)
+                countShift += shiftObject.countShift
+                shift = {
+                    ...shift,
+                    [`${day}_c`]: shiftObject
+                }
+                if (shiftObject.late > 0 ){
+                    countLate+=1
+                }
+            }
         }
         return {
             shift: shift,
@@ -246,43 +253,32 @@ const UserDetail = () => {
         getListCheckin().then()
         requestGetTimesheet().then()
     }, [user]);
+    useEffect(()=>{
+        console.log("vao day", countShift("06/2024"))
+    },[])
 
-    const countShiftInDay = (logInDate)=>{
-        if (logInDate.length < 2) {
-            return({
-                shiftCount: 0
-            })
+    const countShiftInDay = (logInDate, day)=>{
+        const dayInWeek = moment(currentDate, "DD-MM-YYYY").day()
+        const shiftSkey = `shift_s${dayInWeek}`
+        const shiftCkey = `shift_c${dayInWeek}`
+        const startShiftS = timesheet?.[`shift_${dayInWeek}_0`] || "08:00"
+        const endShiftS = timesheet?.[`shift_${dayInWeek}_1`] || "12:00"
+        const startShiftC = timesheet[`shift_${dayInWeek}_2`] || "14:00"
+        const endShiftC = timesheet[`shift_${dayInWeek}_2`] || "18:00"
+        let countShift = 0
+        let countLate = 0
 
-        } else {
-
-            const firstLog = moment.unix(logInDate[0].timestamp)
-            const lastLog = moment.unix(logInDate[logInDate.length - 1].timestamp)
-            if (firstLog.hour() < 14 && lastLog.hour() >= 18) {
-                if (firstLog.hour() < 9 && lastLog.hour() >= 18) {
-
-                    if (firstLog.hour() === 8) {
-                        return({
-                            shiftCount: 1,
-                            late: 1
-                        })
-                    } else {
-                        return({
-                            shiftCount: 1,
-                        })
-                    }
-
-                } else {
-                    return({
-                        shiftCount: 0.5
-                    })
-                }
-
-            } else {
-                return({
-                    shiftCount: 0
-                })
-            }
+        if (timesheet?.[shiftSkey] === 1) {
+            const shiftObject = calShift(startShiftS, endShiftS, logInDate)
+            countShift += shiftObject.countShift
+            countLate += shiftObject.late
         }
+        if (timesheet?.[shiftCkey] === 1) {
+            const shiftObject = calShift(startShiftC, endShiftC, logInDate)
+            countShift += shiftObject.countShift
+            countLate += shiftObject.late
+        }
+        return {countShift, countLate}
     }
 
     const getListData = (value) => {
@@ -291,8 +287,8 @@ const UserDetail = () => {
     };
     const DayModal = ({isOpen, onClose}) => {
         let listData = getCheckinByDateAndUser(`${currentDate}_${user?.userCode}`);
-        const shiftInDay = countShiftInDay(listData)
-        console.log("list", listData)
+        const shiftInDay = countShiftInDay(listData, currentDate)
+
         return (
             <Modal show={isOpen} onHide={onClose} size="lg">
                 <Modal.Header closeButton>
@@ -304,14 +300,14 @@ const UserDetail = () => {
 
                     <tbody>
                     <tr>
-                        <th >Công</th>
-                        <th >{shiftInDay.shiftCount}</th>
+                        <th >Công: </th>
+                        <th > {shiftInDay.countShift}</th>
                     </tr>
                     </tbody>
                     <tbody>
                     <tr>
-                        <th >Muộn</th>
-                        <th >{shiftInDay.late || 0}</th>
+                        <th >Muộn: </th>
+                        <th > {shiftInDay.countLate || 0} phút</th>
                     </tr>
                     </tbody>
                     <div className="shift-label">Dữ liệu chấm công</div>
@@ -350,6 +346,9 @@ const UserDetail = () => {
         if (info.type === 'date') return dateCellRender(current);
         return info.originNode;
     };
+    const onSelect = (newValue) => {
+        setSelectedValue(newValue?.format('MM/YYYY'));
+    };
 
     return (
         <div className="container-detail">
@@ -376,16 +375,13 @@ const UserDetail = () => {
             </Card.Header>
             <div className={"calendar-view"}>
                 {refreshing ? <Skeleton/> :
-                    <Calendar mode={"month"} cellRender={cellRender} style={{borderRadius: 12}}/>
+                    <Calendar mode={"month"} cellRender={cellRender} style={{borderRadius: 12}} onSelect={onSelect}/>
                 }
 
             </div>
             <ShiftModal isOpen={showAdd} onClose={() => {
                 setShowAdd(false)
-            }} count={countShift}/>
-            <ShiftModal isOpen={showAdd} onClose={() => {
-                setShowAdd(false)
-            }} count={countShift}/>
+            }} selectedMonth={selectedValue} count={countShift}/>
             <DayModal isOpen={showDateModal} onClose={() => {
                 setShowDateModal(false)
             }} />
